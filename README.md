@@ -1,1 +1,29 @@
 # pocke
+## 環境
+### フロントエンド
+- react
+- vite
+- node
+- tailwind
+- firebase
+    - authentication
+- cloudflare
+    - pages
+- shadcn/ui
+- biome
+- Docker
+
+### バックエンド
+- cloudflare
+    - workers
+    - D1
+- Hono
+- SQLite
+- firebase
+    - authentication
+- 外部API
+    - Spotify
+    - twitch
+    - Google
+- biome
+- Docker
