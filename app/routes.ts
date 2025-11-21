@@ -1,52 +1,57 @@
 import type { RouteConfig } from "@react-router/dev/routes";
-import { index, route } from "@react-router/dev/routes";
+import { index, layout, route } from "@react-router/dev/routes";
 
 export default [
 	// ホームページ
-	index("pages/home.tsx"),
+	index("routes/home.tsx"),
 
 	// 認証関連
-	route("login", "pages/login.tsx"),
-	route("register", "pages/register.tsx"),
+	route("login", "pages/unauthorized/login.tsx"),
+	route("register", "pages/unauthorized/register.tsx"),
 
-	// コミュニティ関連
-	route(":userId/community", "pages/community.tsx"),
-	route(":userId/community/addCommunity", "pages/community/addCommunity.tsx"),
-	route(":userId/community/:communityId", "pages/community/[communityId].tsx"),
-	route(
-		":userId/community/:communityId/member",
-		"pages/community/[communityId]/member.tsx",
-	),
-	route(
-		":userId/community/:communityId/settings",
-		"pages/community/[communityId]/settings.tsx",
-	),
-	route(
-		":userId/community/:communityId/addList",
-		"pages/community/[communityId]/addList.tsx",
-	),
-	route(
-		":userId/community/:communityId/:listId",
-		"pages/community/[listId].tsx",
-	),
-	route(
-		":userId/community/:communityId/:listId/:itemId",
-		"pages/community/[itemId].tsx",
-	),
-	route(
-		":userId/community/:communityId/:listId/:itemId/thread",
-		"pages/community/[itemId]/thread.tsx",
-	),
-	route(
-		":userId/community/:communityId/addItem",
-		"pages/community/addItem.tsx",
-	),
+	// 認証済みユーザーのレイアウト（メニューバー付き）
+	layout("pages/authenticated/_menu.tsx", [
+		// コミュニティ関連
+		route("community", "pages/authenticated/_menu.home.tsx"),
+		route(
+			"community/:communityId",
+			"pages/authenticated/community/[communityId].tsx",
+		),
+		route(
+			"community/:communityId/member",
+			"pages/authenticated/community/[communityId]/member.tsx",
+		),
+		route(
+			"community/:communityId/settings",
+			"pages/authenticated/community/[communityId]/settings.tsx",
+		),
+		route(
+			"community/:communityId/addList",
+			"pages/authenticated/community/[communityId]/addList.tsx",
+		),
+		route(
+			"community/:communityId/:listId",
+			"pages/authenticated/community/[listId].tsx",
+		),
+		route(
+			"community/:communityId/:listId/:itemId",
+			"pages/authenticated/community/[itemId].tsx",
+		),
+		route(
+			"community/:communityId/:listId/:itemId/thread",
+			"pages/authenticated/community/[itemId]/thread.tsx",
+		),
+		route(
+			"community/:communityId/addItem",
+			"pages/authenticated/community/addItem.tsx",
+		),
 
-	// ユーザープロフィール
-	route(":userId/profile", "pages/profile.tsx"),
-	route(":userId/profile/edit", "pages/profile/edit.tsx"),
-	route(":userId/favorites", "pages/favorites.tsx"),
+		// ユーザープロフィール
+		route("profile", "pages/authenticated/profile/profile.tsx"),
+		route("profile/edit", "pages/authenticated/profile/edit.tsx"),
+		route("favorites", "pages/authenticated/favorites.tsx"),
 
-	// 通知画面
-	route(":userId/notifications", "pages/notifications.tsx"),
+		// 通知画面
+		route("notifications", "pages/authenticated/notifications.tsx"),
+	]),
 ] satisfies RouteConfig;

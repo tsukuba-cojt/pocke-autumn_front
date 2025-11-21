@@ -1,4 +1,4 @@
-import { Welcome } from "../welcome/welcome";
+import Welcome from "../pages/unauthorized/welcome";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
