@@ -23,6 +23,12 @@
 			"quoteStyle": "double"
 		}
 	},
+	"css": {
+		"parser": {
+			"cssModules": false,
+			"allowWrongLineComments": false
+		}
+	},
 	"assist": {
 		"enabled": true,
 		"actions": {

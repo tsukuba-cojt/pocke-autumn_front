@@ -1,0 +1,6 @@
+# Ignore generated files
+.react-router/
+
+# Ignore CSS files (Tailwind CSS syntax not fully supported)
+*.css
+app/*.css
