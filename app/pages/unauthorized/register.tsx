@@ -1,4 +1,4 @@
-import type { Route } from "../+types/register";
+import type { Route } from "./+types/register";
 
 export function meta(_args: Route.MetaArgs) {
 	return [
@@ -9,46 +9,50 @@ export function meta(_args: Route.MetaArgs) {
 
 export default function Register() {
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-3xl font-bold">新規登録</h1>
-			<form className="mt-4 max-w-md">
-				<div className="mb-4">
-					<label htmlFor="username" className="block mb-2">
-						ユーザー名
-					</label>
+		<div className="flex min-h-screen w-full items-center justify-center bg-white">
+			<div className="flex w-full max-w-sm flex-col px-6">
+				<h1 className="mb-10 text-center text-lg font-bold text-black">
+					新規登録
+				</h1>
+				<form className="flex w-full flex-col gap-3">
+					{/* Input fields */}
 					<input
 						type="text"
-						id="username"
-						className="w-full border p-2 rounded"
+						className="h-11 w-full rounded-md bg-gray-300 px-4 text-sm text-black"
 					/>
-				</div>
-				<div className="mb-4">
-					<label htmlFor="email" className="block mb-2">
-						メールアドレス
-					</label>
-					<input
-						type="email"
-						id="email"
-						className="w-full border p-2 rounded"
-					/>
-				</div>
-				<div className="mb-4">
-					<label htmlFor="password" className="block mb-2">
-						パスワード
-					</label>
 					<input
 						type="password"
-						id="password"
-						className="w-full border p-2 rounded"
+						className="h-11 w-full rounded-md bg-gray-300 px-4 text-sm text-black"
 					/>
-				</div>
-				<button
-					type="submit"
-					className="bg-blue-500 text-white px-4 py-2 rounded"
-				>
-					登録
-				</button>
-			</form>
+					{/* Submit button */}
+					<button
+						type="submit"
+						className="mt-8 h-11 w-full rounded-full bg-gray-600 text-sm font-medium text-white hover:bg-gray-700"
+					>
+						登録
+					</button>
+
+					{/* OAuth buttons */}
+					<button
+						type="button"
+						className="mt-2 h-11 w-full rounded-md bg-gray-300 text-sm font-medium text-black hover:bg-gray-400"
+					>
+						Googleで新規登録
+					</button>
+					<button
+						type="button"
+						className="h-11 w-full rounded-md bg-gray-300 text-sm font-medium text-black hover:bg-gray-400"
+					>
+						appleで新規登録
+					</button>
+					<button
+						type="button"
+						className="h-11 w-full rounded-md bg-gray-300 text-sm font-medium text-black hover:bg-gray-400"
+					>
+						Githubで新規登録
+					</button>
+				</form>
+			</div>
 		</div>
 	);
 }
