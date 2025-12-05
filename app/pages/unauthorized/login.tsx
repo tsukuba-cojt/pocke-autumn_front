@@ -1,4 +1,3 @@
-import { Header } from "~/components/Header";
 import type { Route } from "./+types/login";
 
 export function meta(_args: Route.MetaArgs) {
