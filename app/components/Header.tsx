@@ -9,8 +9,8 @@ export function Header({ title, showBackButton = false }: HeaderProps) {
 	const navigate = useNavigate();
 
 	return (
-		<header className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200 bg-white">
-			<div className="relative flex h-14 items-center justify-center px-4">
+		<header className="fixed left-0 right-0 top-0 z-50 bg-white">
+			<div className="relative flex h-14 items-center justify-center px-4 border-b border-gray-200 -mx-4">
 				{showBackButton && (
 					<button
 						type="button"
