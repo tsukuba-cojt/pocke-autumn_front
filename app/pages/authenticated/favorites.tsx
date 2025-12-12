@@ -1,3 +1,4 @@
+import { Header } from "../../components/Header";
 import { useUser } from "../../contexts/UserContext";
 import type { Route } from "./+types/favorites";
 
@@ -12,10 +13,9 @@ export default function Favorites() {
 	const { user } = useUser();
 
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-3xl font-bold">お気に入り</h1>
-			<p className="mt-2 text-gray-600">ユーザーID: {user?.userId}</p>
-			<div className="mt-4">
+		<div className="min-h-screen bg-white flex flex-col">
+			<Header title="お気に入り" showBackButton={false} />
+			<div className="flex-1 px-6 py-6 pt-20">
 				<p>お気に入りのアイテムがここに表示されます。</p>
 			</div>
 		</div>

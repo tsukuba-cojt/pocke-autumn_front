@@ -1,3 +1,4 @@
+import { Header } from "../../../components/Header";
 import { useUser } from "../../../contexts/UserContext";
 import type { Route } from "./+types/edit";
 
@@ -12,10 +13,10 @@ export default function ProfileEdit() {
 	const { user } = useUser();
 
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-3xl font-bold">プロフィール編集</h1>
-			<p className="mt-2 text-gray-600">ユーザーID: {user?.userId}</p>
-			<form className="mt-4 max-w-md">
+		<div className="min-h-screen bg-white flex flex-col">
+			<Header title="プロフィール編集" showBackButton={true} />
+			<div className="flex-1 px-6 py-6 pt-20">
+				<form className="mt-4 max-w-md">
 				<div className="mb-4">
 					<label htmlFor="username" className="block mb-2">
 						ユーザー名
@@ -39,6 +40,7 @@ export default function ProfileEdit() {
 					保存
 				</button>
 			</form>
+			</div>
 		</div>
 	);
 }

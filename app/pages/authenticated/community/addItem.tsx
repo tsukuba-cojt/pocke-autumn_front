@@ -1,3 +1,4 @@
+import { Header } from "../../../components/Header";
 import { useUser } from "../../../contexts/UserContext";
 import type { Route } from "./+types/addItem";
 
@@ -12,11 +13,10 @@ export default function AddItem({ params }: Route.ComponentProps) {
 	const { user } = useUser();
 
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-3xl font-bold">アイテム追加</h1>
-			<p className="mt-2 text-gray-600">ユーザーID: {user?.userId}</p>
-			<p className="text-gray-600">コミュニティID: {params.communityId}</p>
-			<form className="mt-4 max-w-md">
+		<div className="min-h-screen bg-white flex flex-col">
+			<Header title="アイテム追加" showBackButton={true} />
+			<div className="flex-1 px-6 py-6 pt-20">
+				<form className="mt-4 max-w-md">
 				<div className="mb-4">
 					<label htmlFor="name" className="block mb-2">
 						アイテム名
@@ -40,6 +40,7 @@ export default function AddItem({ params }: Route.ComponentProps) {
 					追加
 				</button>
 			</form>
+			</div>
 		</div>
 	);
 }

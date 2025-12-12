@@ -1,3 +1,4 @@
+import { Header } from "../../../components/Header";
 import { useUser } from "../../../contexts/UserContext";
 import type { Route } from "./+types/[listId]";
 
@@ -12,12 +13,9 @@ export default function ListDetail({ params }: Route.ComponentProps) {
 	const { user } = useUser();
 
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-3xl font-bold">リスト詳細</h1>
-			<p className="mt-2 text-gray-600">ユーザーID: {user?.userId}</p>
-			<p className="text-gray-600">コミュニティID: {params.communityId}</p>
-			<p className="text-gray-600">リストID: {params.listId}</p>
-			<div className="mt-4">
+		<div className="min-h-screen bg-white flex flex-col">
+			<Header title="リスト詳細" showBackButton={true} />
+			<div className="flex-1 px-6 py-6 pt-20">
 				<p>リスト内のアイテムがここに表示されます。</p>
 			</div>
 		</div>

@@ -1,3 +1,4 @@
+import { Header } from "../../components/Header";
 import { useUser } from "../../contexts/UserContext";
 import type { Route } from "./+types/notifications";
 
@@ -9,10 +10,9 @@ export default function Notifications() {
 	const { user } = useUser();
 
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-3xl font-bold">通知</h1>
-			<p className="mt-2 text-gray-600">ユーザーID: {user?.userId}</p>
-			<div className="mt-4">
+		<div className="min-h-screen bg-white flex flex-col">
+			<Header title="通知" showBackButton={false} />
+			<div className="flex-1 px-6 py-6 pt-20">
 				<p>通知がここに表示されます。</p>
 			</div>
 		</div>
