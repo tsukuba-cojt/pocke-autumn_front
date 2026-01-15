@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router";
 import { Header } from "../../../components/Header";
-import { useUser } from "../../../contexts/UserContext";
 import type { Route } from "../../../../types/app/pages/authenticated/community/+types/[communityId]";
 
 export function meta(_args: Route.MetaArgs) {
@@ -18,7 +17,6 @@ const mockMembers = [
 ];
 
 export default function CommunityDetail({ params }: Route.ComponentProps) {
-	const { user } = useUser();
 	const navigate = useNavigate();
 
 	return (
@@ -54,7 +52,7 @@ export default function CommunityDetail({ params }: Route.ComponentProps) {
 							className="flex items-center gap-4 p-4 border border-gray-300 rounded-2xl"
 						>
 							{/* Avatar */}
-							<div className="w-32 h-24 bg-gray-300 rounded-lg flex-shrink-0" />
+							<div className="w-32 h-24 bg-gray-300 rounded-lg shrink-0" />
 
 							{/* Member Name */}
 							<div className="flex-1">
