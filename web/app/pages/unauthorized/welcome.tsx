@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 function Welcome() {
 	const navigate = useNavigate();
 	return (
-		<div className="flex h-screen w-full items-center justify-center bg-white">
+		<div className="flex h-screen w-full items-center justify-center bg-brand">
 			<div className="flex flex-col items-center gap-8">
 				<p className="text-lg font-normal text-black mb-44">ようこそ！！</p>
 				<div className="flex flex-col gap-3">
