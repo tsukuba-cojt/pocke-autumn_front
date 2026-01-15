@@ -22,6 +22,7 @@ body {
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-x2: calc(var(--radius) + 8px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -67,7 +68,7 @@ body {
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.912 0.02 24.5);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.912 0.02 24.5);
+  --muted: oklch(0.957 0.006 241.6);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.778 0.082 17.5);
   --accent-foreground: oklch(0.205 0 0);
