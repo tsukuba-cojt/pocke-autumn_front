@@ -10,18 +10,21 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { MainTabParamList } from "../navigation/types";
+import { CommonActions } from "@react-navigation/native";
+import type { HomeStackParamList } from "../navigation/types";
 import * as ImagePicker from "expo-image-picker";
+import { getToken, clearToken } from "../utils/tokenManager";
 import ScreenHeader, { screenHeaderStyles } from "../components/ScreenHeader";
 
 type Props = {
-	navigation: NativeStackNavigationProp<MainTabParamList>;
+	navigation: NativeStackNavigationProp<HomeStackParamList, "CreateCommunity">;
 };
 
 export default function CreateCommunityScreen({ navigation }: Props) {
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
 	const [communityImage, setCommunityImage] = useState<string | null>(null);
+	const [uploadedIconUrl, setUploadedIconUrl] = useState<string | null>(null);
 
 	const handleNameChange = (value: string) => {
 		setName(value.slice(0, 50));
@@ -47,25 +50,162 @@ export default function CreateCommunityScreen({ navigation }: Props) {
 
 		if (!result.canceled && result.assets[0]) {
 			setCommunityImage(result.assets[0].uri);
+			// 画像をアップロード
+			const uploadUri = "https://pocke-autumn-back.pocke-cojt.workers.dev/images/upload";
+			const token = await getToken();
+
+			try {
+				const formData = new FormData();
+				const imageUri = result.assets[0].uri;
+				const filename = imageUri.split('/').pop() || 'photo.jpg';
+				const match = /\.(\w+)$/.exec(filename);
+				const type = match ? `image/${match[1]}` : 'image/jpeg';
+				
+				// @ts-ignore - React Native FormData accepts this format
+				formData.append('file', {
+					uri: imageUri,
+					name: filename,
+					type: type,
+				});
+				
+				const response = await fetch(uploadUri, {
+					method: "POST",
+					headers: {
+						"Authorization": `Bearer ${token}`,
+					},
+					body: formData,
+				});
+				
+				if (response.ok) {
+					const data = await response.json();
+					console.log("画像アップロード成功:", data);
+					// サーバーから返されたURLを保存
+					if (data.result?.variants?.[0]) {
+						setUploadedIconUrl(data.result.variants[0]);
+					}
+				} else {
+					console.error("画像アップロード失敗:", response.status);
+					alert("画像のアップロードに失敗しました");
+				}
+			} catch (error) {
+				console.error("画像アップロードエラー:", error);
+				alert("画像のアップロード中にエラーが発生しました");
+			}
 		}
 	};
 
-	const handleCreate = () => {
+	const handleCreate = async () => {
+		console.log("handleCreate called");
 		if (!name.trim()) {
 			alert("コミュニティ名を入力してください");
 			return;
 		}
 
-		// TODO: サーバーにコミュニティを作成
-		console.log("Community created:", { name, description, image: communityImage });
-
-		// フォームをリセット
-		setName("");
-		setDescription("");
-		setCommunityImage(null);
-
-		// HomeScreenに戻る
-		navigation.goBack();
+		const token = await getToken();
+		try {
+			const response = await fetch("https://pocke-autumn-back.pocke-cojt.workers.dev/community/create", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					name: name,
+					description: description || undefined,
+					iconUrl: uploadedIconUrl || null,
+				}),
+			});
+			if (response.ok) {
+				const data = await response.json();
+				console.log("コミュニティ作成成功:", data);
+				console.log("Response keys:", Object.keys(data));
+				console.log("data.id:", data.id);
+				console.log("data.communityId:", data.communityId);
+				console.log("data.community?.id:", data.community?.id);
+				console.log("Full data structure:", JSON.stringify(data, null, 2));
+				const communityId = data.community?.id || data.id || data.communityId || data.community_id || "";
+				
+				if (!communityId) {
+					console.error("Community ID not found in response:", data);
+					alert("コミュニティIDが取得できませんでした");
+					return;
+				}
+				console.log("Using communityId:", communityId);
+				
+				// inviteCodeもcommunityオブジェクトの中にある可能性を考慮
+				const inviteCode = data.inviteCode || data.community?.inviteCode;
+				
+				console.log("Token for join request:", token ? `${token.substring(0, 20)}...` : "No token");
+				
+				// 作成者自身をコミュニティに管理者として参加させる
+				try {
+					const joinResponse = await fetch(`https://pocke-autumn-back.pocke-cojt.workers.dev/community/${communityId}/members`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`,
+						},
+						body: JSON.stringify({
+							authority: "admin",
+						}),
+					});
+					
+					console.log("Join response status:", joinResponse.status);
+					console.log("Join response ok:", joinResponse.ok);
+					
+					if (joinResponse.ok) {
+						console.log("コミュニティへの参加成功（管理者として）");
+					} else if (joinResponse.status === 401) {
+						console.error("認証エラー: トークンが無効または期限切れです");
+						alert("セッション切れ\n再度ログインしてください");
+						await clearToken();
+						let rootNavigation = navigation.getParent();
+						while (rootNavigation?.getParent()) {
+							rootNavigation = rootNavigation.getParent();
+						}
+						if (rootNavigation) {
+							rootNavigation.dispatch(
+								CommonActions.reset({
+									index: 0,
+									routes: [{ name: 'Auth' }],
+								})
+							);
+						}
+						return;
+					} else if (joinResponse.status === 409) {
+						console.log("既にメンバーとして登録されています（これは正常です）");
+					} else {
+						const responseText = await joinResponse.text();
+						console.error("コミュニティへの参加失敗 status:", joinResponse.status);
+						console.error("Response text:", responseText);
+						// JSONとしてパースできる場合のみパース
+						try {
+							const errorData = JSON.parse(responseText);
+							console.error("Error data:", errorData);
+						} catch {
+							console.error("Response is not JSON:", responseText);
+						}
+					}
+				} catch (joinError) {
+					console.error("コミュニティ参加エラー:", joinError);
+				}
+				// 完了画面へ遷移
+				console.log("Attempting navigation to CommunityCreated");
+				navigation.navigate("CommunityCreated", {
+					communityId: communityId,
+					communityName: name,
+					inviteCode: inviteCode,
+				});
+				console.log("Navigation called successfully");
+			} else {
+				const errorData = await response.json();
+				console.error("コミュニティ作成失敗:", errorData);
+				alert("コミュニティの作成に失敗しました");
+			}
+		} catch (error) {
+			console.error("コミュニティ作成エラー:", error);
+			alert("コミュニティの作成中にエラーが発生しました");
+		}
 	};
 
 	return (

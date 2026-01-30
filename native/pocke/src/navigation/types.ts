@@ -1,22 +1,41 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
+export type ProfileStackParamList = {
+	ProfileHome: undefined;
+	SettingProfile: undefined;
+	EditProfile: undefined;
+	Favorites: undefined;
+	ChangeEmail: undefined;
+	ChangePassword: undefined;
+};
+
 export type AuthStackParamList = {
 	Welcome: undefined;
 	Login: undefined;
 	Register: undefined;
 	Home: undefined;
-	SettingProfile: undefined;
+	Profile: NavigatorScreenParams<ProfileStackParamList>;
+	Notifications: undefined;
+};
+
+export type HomeStackParamList = {
+	HomeMain: undefined;
+	JoinCommunity: { communityId?: string };
 	CreateCommunity: undefined;
+	CommunityCreated: { communityId: string; communityName: string; inviteCode?: string };
+	CommunityDetail: { id: string };
+	CommunitySettings: { id: string };
+	CommunityMembers: { id: string };
+	ListDetail: { id: string };
+	CreateList: { communityId: string };
+	AddItem: { listId: string };
+	UserProfile: { userId: string };
 };
 
 export type MainTabParamList = {
 	Home: undefined;
-	CreateCommunity: undefined;
 	Notifications: undefined;
-	Profile: undefined;
-};
-
-export type ProfileStackParamList = {
-	ProfileHome: undefined;
-	SettingProfile: undefined;
+	Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 
 export type CommunityStackParamList = {

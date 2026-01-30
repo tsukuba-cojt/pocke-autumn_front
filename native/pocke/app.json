@@ -4,7 +4,7 @@
     "slug": "pocke",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "scheme": "pocke",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

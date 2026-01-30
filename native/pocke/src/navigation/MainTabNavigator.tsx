@@ -14,12 +14,7 @@ export default function MainTabNavigator() {
 				tabBarActiveTintColor: "#F2ABAF",
 				tabBarInactiveTintColor: "#999",
 				tabBarStyle: {
-					borderTopWidth: 1,
-					borderTopColor: "#f0f0f0",
-					height: 60,
-					paddingBottom: 8,
-					paddingTop: 8,
-					backgroundColor: "#fff",
+					display: "none",
 				},
 				headerShown: false,
 			}}
