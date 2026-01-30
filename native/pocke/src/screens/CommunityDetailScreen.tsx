@@ -15,6 +15,7 @@ interface communityInformation {
 	id: string;
 	name: string;
 	description: string;
+	iconUrl?: string;
 	thumbnailUrl?: string;
 	genreName?: string;
 	userId?: string;
@@ -77,7 +78,7 @@ export default function CommunityDetailScreen({ navigation, route }: Props) {
 			if (communityResponse.ok) {
 				const communityData = await communityResponse.json();
 				console.log("Community API response:", communityData);
-			
+
 			// レスポンスが直接コミュニティオブジェクトかチェック
 			if (communityData?.id) {
 				setCommunity(communityData);
@@ -257,20 +258,24 @@ export default function CommunityDetailScreen({ navigation, route }: Props) {
 
 			<ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 				{/* Community Icon Banner */}
-				{community.thumbnailUrl ? (
+				{(community.iconUrl || community.thumbnailUrl) ? (
 					<Image
-						source={{ uri: community.thumbnailUrl }}
+						source={{ uri: community.iconUrl || community.thumbnailUrl }}
 						style={styles.communityBanner}
 						resizeMode="cover"
-					/>
-				) : (
-					<View style={styles.communityBannerPlaceholder} />
-				)}
+					onLoad={() => console.log("Community banner loaded:", community.iconUrl || community.thumbnailUrl)}
+					onError={(error) => console.error("Community banner load error:", error.nativeEvent.error, "URL:", community.iconUrl || community.thumbnailUrl)}
+				/>
+			) : (
+				<View style={styles.communityBannerPlaceholder}>
+					<Text style={{ color: '#999', textAlign: 'center' }}>画像がありません</Text>
+				</View>
+			)}
 
-				{/* Community Info Section */}
-				<View style={styles.communityInfo}>
-					<Text style={styles.communityName}>{community.name}</Text>
-					<Text style={styles.communityDescription}>{community.description}</Text>
+			{/* Community Info Section */}
+			<View style={styles.communityInfo}>
+				<Text style={styles.communityName}>{community.name}</Text>
+				<Text style={styles.communityDescription}>{community.description}</Text>
 
 				{/* Members Section */}
 				<View style={styles.membersSection}>
@@ -297,10 +302,10 @@ export default function CommunityDetailScreen({ navigation, route }: Props) {
 						<Ionicons name="chevron-forward" size={16} color="#343D45" />
 					</Pressable>
 				</View>
-				</View>
+			</View>
 
-				{/* Lists Section */}
-				<View style={styles.listsSection}>
+			{/* Lists Section */}
+			<View style={styles.listsSection}>
 					{lists.length === 0 ? (
 						<Text style={styles.emptyText}>まだリストがありません</Text>
 					) : (

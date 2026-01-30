@@ -189,7 +189,7 @@ export default function ListDetailScreen({ navigation, route }: Props) {
 								</View>
 								<View style={styles.itemInfo}>
 									<Text style={styles.itemTitle}>{item.name}</Text>
-									<Text style={styles.itemAuthor}>古舘春一</Text>
+									<Text style={styles.itemAuthor}>{item.author}</Text>
 								</View>
 								<View style={styles.memberAvatars}>
 									{[1, 2, 3].map((i) => (

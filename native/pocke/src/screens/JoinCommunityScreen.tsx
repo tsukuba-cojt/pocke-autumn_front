@@ -131,13 +131,29 @@ export default function JoinCommunityScreen({ navigation, route }: Props) {
 				setModalVisible(true);
 			} else {
 				console.error("コミュニティ情報取得失敗:", response.status);
-				Alert.alert("エラー", "コミュニティ情報の取得に失敗しました");
-				setScanned(false);
+				Alert.alert(
+					"エラー",
+					"コミュニティ情報の取得に失敗しました",
+					[
+						{
+							text: "OK",
+							onPress: () => setScanned(false),
+						},
+					]
+				);
 			}
 		} catch (error) {
 			console.error("コミュニティ情報取得エラー:", error);
-			Alert.alert("エラー", "コミュニティ情報の取得中にエラーが発生しました");
-			setScanned(false);
+			Alert.alert(
+				"エラー",
+				"コミュニティ情報の取得中にエラーが発生しました",
+				[
+					{
+						text: "OK",
+						onPress: () => setScanned(false),
+					},
+				]
+			);
 		} finally {
 			setIsLoadingInfo(false);
 		}
@@ -169,13 +185,29 @@ export default function JoinCommunityScreen({ navigation, route }: Props) {
 			} else {
 				const errorText = await response.text();
 				console.error("コミュニティ参加失敗:", response.status, errorText);
-				Alert.alert("エラー", "コミュニティへの参加に失敗しました");
-				setScanned(false);
+				Alert.alert(
+					"エラー",
+					"コミュニティへの参加に失敗しました",
+					[
+						{
+							text: "OK",
+							onPress: () => setScanned(false),
+						},
+					]
+				);
 			}
 		} catch (error) {
 			console.error("コミュニティ参加エラー:", error);
-			Alert.alert("エラー", "コミュニティへの参加中にエラーが発生しました");
-			setScanned(false);
+			Alert.alert(
+				"エラー",
+				"コミュニティへの参加中にエラーが発生しました",
+				[
+					{
+						text: "OK",
+						onPress: () => setScanned(false),
+					},
+				]
+				);
 		}
 	};
 

@@ -13,10 +13,37 @@ type Props = {
 	route: RouteProp<HomeStackParamList, "AddItem">;
 };
 
+type SearchResult = {
+	id: string;
+	title: string;
+	subtitle: string;
+	imageUrl?: string;
+	url?: string;
+	author?: string;
+};
+
+type GenreType = "Spotify" | "GoogleBooks" | "Twitch" | "other";
+
+const genreOptions = [
+	{ label: "書籍", value: "GoogleBooks" as GenreType },
+	{ label: "雑誌", value: "GoogleBooks" as GenreType },
+	{ label: "映画", value: "other" as GenreType },
+	{ label: "マンガ", value: "GoogleBooks" as GenreType },
+	{ label: "アニメ", value: "other" as GenreType },
+	{ label: "音楽", value: "Spotify" as GenreType },
+	{ label: "ゲーム配信", value: "Twitch" as GenreType },
+	{ label: "場所", value: "other" as GenreType },
+	{ label: "料理", value: "other" as GenreType },
+	{ label: "観光地", value: "other" as GenreType },
+	{ label: "サービス", value: "other" as GenreType },
+	{ label: "アプリ", value: "other" as GenreType },
+];
+
 export default function AddItemScreen({ navigation, route }: Props) {
 	const { listId } = route.params;
 	const [activeTab, setActiveTab] = useState<"search" | "manual">("search");
-	const [genre, setGenre] = useState("書籍");
+	const [genre, setGenre] = useState<GenreType>("Spotify");
+	const [genreLabel, setGenreLabel] = useState("音楽");
 	const [showGenreModal, setShowGenreModal] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [itemName, setItemName] = useState("");
@@ -24,18 +51,249 @@ export default function AddItemScreen({ navigation, route }: Props) {
 	const [url, setUrl] = useState("");
 	const [image, setImage] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+	const [isSearching, setIsSearching] = useState(false);
 
-	const genres = ["書籍", "雑誌", "映画", "マンガ", "アニメ", "音楽", "場所", "料理", "観光地", "サービス", "アプリ"];
+	// Search function
+	const handleSearch = async () => {
+		if (!searchQuery.trim()) {
+			setSearchResults([]);
+			return;
+		}
 
-	// Mock search results
-	const searchResults = [
-		{ id: "1", title: "First Love", subtitle: "宇多田ヒカル" },
-		{ id: "2", title: "First Love", subtitle: "宇多田ヒカル" },
-		{ id: "3", title: "First Love", subtitle: "宇多田ヒカル" },
-		{ id: "4", title: "First Love", subtitle: "宇多田ヒカル" },
-		{ id: "5", title: "First Love", subtitle: "宇多田ヒカル" },
-		{ id: "6", title: "First Love", subtitle: "宇多田ヒカル" },
-	];
+		setIsSearching(true);
+		try {
+			let endpoint = "";
+			const encodedQuery = encodeURIComponent(searchQuery.trim());
+
+			// ジャンルに応じてAPIエンドポイントを選択
+			if (genre === "Spotify") {
+				endpoint = `https://pocke-autumn-back.pocke-cojt.workers.dev/search/spotify?q=${encodedQuery}`;
+			} else if (genre === "Twitch") {
+				endpoint = `https://pocke-autumn-back.pocke-cojt.workers.dev/search/twitch?q=${encodedQuery}`;
+			} else if (genre === "GoogleBooks") {
+				endpoint = `https://pocke-autumn-back.pocke-cojt.workers.dev/search/google-books?q=${encodedQuery}`;
+			} else {
+				// 他のジャンルはデフォルトで空の結果
+				setSearchResults([]);
+				setIsSearching(false);
+				return;
+			}
+
+			console.log("=== 検索開始 ===");
+			console.log("ジャンル:", genre);
+			console.log("ジャンル表示名:", genreLabel);
+			console.log("検索クエリ:", searchQuery);
+			console.log("エンコード後:", encodeURIComponent(searchQuery));
+			console.log("リクエストURL:", endpoint);
+
+			const response = await fetch(endpoint);
+
+			console.log("レスポンスステータス:", response.status);
+			console.log("レスポンスヘッダー:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("=== 検索エラー ===");
+				console.error("ステータス:", response.status);
+				console.error("ステータステキスト:", response.statusText);
+				console.error("エラーボディ:", errorText);
+				console.error("URL:", endpoint);
+
+				// サーバーエラーの場合は手動入力を提案
+				if (response.status === 500) {
+					Alert.alert(
+						"検索サービスエラー",
+						`現在、${genreLabel}の検索サービスが利用できません。\n\n「手動」タブから直接アイテムを追加してください。`,
+						[
+							{
+								text: "手動で追加",
+								onPress: () => setActiveTab("manual")
+							},
+							{
+								text: "閉じる",
+								style: "cancel"
+							}
+						]
+					);
+				} else {
+					Alert.alert(
+						"検索エラー",
+						`検索に失敗しました (エラー: ${response.status})\n\n別のキーワードで試すか、「手動」タブから追加してください。`
+					);
+				}
+				setSearchResults([]);
+				return;
+			}
+
+			const data = await response.json();
+			console.log("レスポンスデータ構造:", Object.keys(data));
+			console.log("完全なレスポンス:", JSON.stringify(data).substring(0, 500));
+
+			// APIレスポンスを統一フォーマットに変換
+			let results: SearchResult[] = [];
+
+			if (genre === "Spotify" && data.type === "spotify" && data.items) {
+				// Spotify - 新しいAPI形式
+				results = data.items.map((item: any) => ({
+					id: item.url || item.title, // urlをIDとして使用
+					title: item.title,
+					subtitle: item.author,
+					imageUrl: item.imageURL,
+					url: item.url,
+					author: item.author,
+				}));
+			} else if (genre === "Spotify" && data.tracks) {
+				// Spotify - 旧API形式（後方互換性のため）
+				results = data.tracks.items.map((track: any) => ({
+					id: track.id,
+					title: track.name,
+					subtitle: track.artists.map((a: any) => a.name).join(", "),
+					imageUrl: track.album?.images?.[0]?.url,
+					url: track.external_urls?.spotify,
+					author: track.artists.map((a: any) => a.name).join(", "),
+				}));
+			} else if (genre === "Twitch" && data.data) {
+				// Twitch
+				results = data.data.map((stream: any) => ({
+					id: stream.id,
+					title: stream.title,
+					subtitle: `${stream.user_name} - ${stream.game_name}`,
+					imageUrl: stream.thumbnail_url?.replace("{width}", "320").replace("{height}", "180"),
+					url: `https://twitch.tv/${stream.user_login}`,
+					author: stream.user_name,
+				}));
+			} else if (genre === "GoogleBooks" && data.items) {
+				// Google Books
+				results = data.items.map((book: any) => ({
+					id: book.id,
+					title: book.volumeInfo?.title || "タイトルなし",
+					subtitle: book.volumeInfo?.authors?.join(", ") || "著者不明",
+					imageUrl: book.volumeInfo?.imageLinks?.thumbnail,
+					url: book.volumeInfo?.infoLink,
+					author: book.volumeInfo?.authors?.join(", "),
+				}));
+			} else {
+				console.warn("予期しないAPIレスポンス形式:", data);
+			}
+
+			console.log("変換後の検索結果数:", results.length);
+			setSearchResults(results);
+		} catch (error) {
+			console.error("検索エラー:", error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			Alert.alert(
+				"エラー",
+				`検索中にエラーが発生しました\n\n${errorMessage}`
+			);
+			setSearchResults([]);
+		} finally {
+			setIsSearching(false);
+		}
+	};
+
+	// 検索結果からアイテムを追加
+	const handleAddFromSearch = async (result: SearchResult) => {
+		setIsLoading(true);
+		const token = await getToken();
+
+		if (!token) {
+			Alert.alert("エラー", "ログインしてください");
+			setIsLoading(false);
+			return;
+		}
+
+		try {
+			const userResponse = await fetch(
+				"https://pocke-autumn-back.pocke-cojt.workers.dev/me",
+				{
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
+
+			if (userResponse.status === 401) {
+				Alert.alert("セッション切れ", "再度ログインしてください");
+				await clearToken();
+				let rootNavigation = navigation.getParent();
+				while (rootNavigation?.getParent()) {
+					rootNavigation = rootNavigation.getParent();
+				}
+				if (rootNavigation) {
+					rootNavigation.dispatch(
+						CommonActions.reset({
+							index: 0,
+							routes: [{ name: 'Welcome' }],
+						})
+					);
+				}
+				setIsLoading(false);
+				return;
+			}
+
+			if (!userResponse.ok) {
+				Alert.alert("エラー", "ユーザー情報の取得に失敗しました");
+				setIsLoading(false);
+				return;
+			}
+
+			const userData = await userResponse.json();
+			const userId = userData.id;
+
+			const response = await fetch(
+				"https://pocke-autumn-back.pocke-cojt.workers.dev/item/create",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify({
+						title: result.title,
+						listId: listId,
+						userId: userId,
+						url: result.url || null,
+						author: result.author || null,
+						imageUrl: result.imageUrl || null,
+						genreId: null,
+					}),
+				}
+			);
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("アイテム作成成功:", data);
+				Alert.alert("成功", "アイテムを追加しました");
+				navigation.goBack();
+			} else if (response.status === 401) {
+				Alert.alert("セッション切れ", "再度ログインしてください");
+				await clearToken();
+				let rootNavigation = navigation.getParent();
+				while (rootNavigation?.getParent()) {
+					rootNavigation = rootNavigation.getParent();
+				}
+				if (rootNavigation) {
+					rootNavigation.dispatch(
+						CommonActions.reset({
+							index: 0,
+							routes: [{ name: 'Welcome' }],
+						})
+					);
+				}
+			} else {
+				const errorText = await response.text();
+				console.error("アイテム作成失敗:", response.status, errorText);
+				Alert.alert("エラー", `アイテムの作成に失敗しました\n\nステータス: ${response.status}`);
+			}
+		} catch (error) {
+			console.error("アイテム作成エラー:", error);
+			Alert.alert("エラー", `アイテムの作成に失敗しました\n\n${error}`);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	const handlePickImage = async () => {
 		const result = await ImagePicker.launchImageLibraryAsync({
@@ -197,7 +455,7 @@ export default function AddItemScreen({ navigation, route }: Props) {
 						{/* Genre Selector */}
 						<Pressable style={styles.genreSelector} onPress={() => setShowGenreModal(true)}>
 							<Ionicons name="book-outline" size={20} color="#666" />
-							<Text style={styles.genreText}>{genre}</Text>
+							<Text style={styles.genreText}>{genreLabel}</Text>
 							<Ionicons name="chevron-down" size={20} color="#666" />
 						</Pressable>
 
@@ -210,24 +468,67 @@ export default function AddItemScreen({ navigation, route }: Props) {
 								value={searchQuery}
 								onChangeText={setSearchQuery}
 								placeholderTextColor="#999"
+								onSubmitEditing={handleSearch}
+								returnKeyType="search"
 							/>
+							<Pressable onPress={handleSearch} disabled={isSearching}>
+								<Text style={styles.searchButton}>検索</Text>
+							</Pressable>
 						</View>
 
+						{/* Loading */}
+						{isSearching && (
+							<View style={styles.loadingContainer}>
+								<ActivityIndicator size="large" color="#F2ABAF" />
+								<Text style={styles.loadingText}>検索中...</Text>
+							</View>
+						)}
+
 						{/* Search Results */}
-						<View style={styles.resultsList}>
-							{searchResults.map((item) => (
-								<View key={`${item.id}-${item.title}`} style={styles.resultItem}>
-									<View style={styles.resultImage} />
-									<View style={styles.resultInfo}>
-										<Text style={styles.resultTitle}>{item.title}</Text>
-										<Text style={styles.resultSubtitle}>{item.subtitle}</Text>
+						{!isSearching && searchResults.length > 0 && (
+							<View style={styles.resultsList}>
+								{searchResults.map((item) => (
+									<View key={`${item.id}-${item.title}`} style={styles.resultItem}>
+										{item.imageUrl ? (
+											<View style={styles.resultImageContainer}>
+												<Text style={styles.resultImage}>🖼️</Text>
+											</View>
+										) : (
+											<View style={styles.resultImage} />
+										)}
+										<View style={styles.resultInfo}>
+											<Text style={styles.resultTitle} numberOfLines={1}>{item.title}</Text>
+											<Text style={styles.resultSubtitle} numberOfLines={1}>{item.subtitle}</Text>
+										</View>
+										<Pressable
+											style={styles.addButton}
+											onPress={() => handleAddFromSearch(item)}
+											disabled={isLoading}
+										>
+											{isLoading ? (
+												<ActivityIndicator size="small" color="#F2ABAF" />
+											) : (
+												<Ionicons name="add-circle-outline" size={28} color="#F2ABAF" />
+											)}
+										</Pressable>
 									</View>
-									<Pressable style={styles.addButton}>
-										<Ionicons name="add-circle-outline" size={28} color="#F2ABAF" />
-									</Pressable>
-								</View>
-							))}
-						</View>
+								))}
+							</View>
+						)}
+
+						{/* No Results */}
+						{!isSearching && searchQuery && searchResults.length === 0 && (
+							<View style={styles.noResults}>
+								<Ionicons name="search-outline" size={48} color="#ccc" />
+								<Text style={styles.noResultsText}>検索結果が見つかりませんでした</Text>
+								{genre === "other" && (
+									<Text style={styles.noResultsHint}>
+										このジャンルは検索に対応していません{"\n"}
+										音楽、ゲーム配信、書籍から選択してください
+									</Text>
+								)}
+							</View>
+						)}
 					</View>
 				) : (
 					// Manual Tab
@@ -239,7 +540,7 @@ export default function AddItemScreen({ navigation, route }: Props) {
 							</Text>
 							<Pressable style={styles.dropdown} onPress={() => setShowGenreModal(true)}>
 								<Ionicons name="book-outline" size={20} color="#666" />
-								<Text style={styles.dropdownText}>{genre}</Text>
+								<Text style={styles.dropdownText}>{genreLabel}</Text>
 								<Ionicons name="chevron-down" size={20} color="#666" />
 							</Pressable>
 						</View>
@@ -309,16 +610,16 @@ export default function AddItemScreen({ navigation, route }: Props) {
 						</View>
 
 						{/* Create Button */}
-					<Pressable 
-						style={[styles.createButton, isLoading && styles.createButtonDisabled]} 
-						onPress={handleCreate}
-						disabled={isLoading}
-					>
-						{isLoading ? (
-							<ActivityIndicator size="small" color="#fff" />
-						) : (
-							<Text style={styles.createButtonText}>作成</Text>
-						)}
+						<Pressable
+							style={[styles.createButton, isLoading && styles.createButtonDisabled]}
+							onPress={handleCreate}
+							disabled={isLoading}
+						>
+							{isLoading ? (
+								<ActivityIndicator size="small" color="#fff" />
+							) : (
+								<Text style={styles.createButtonText}>作成</Text>
+							)}
 						</Pressable>
 					</View>
 				)}
@@ -334,19 +635,20 @@ export default function AddItemScreen({ navigation, route }: Props) {
 				<Pressable style={styles.modalOverlay} onPress={() => setShowGenreModal(false)}>
 					<View style={styles.modalContent}>
 						<Text style={styles.modalTitle}>ジャンルを選択</Text>
-						{genres.map((g) => (
+						{genreOptions.map((option) => (
 							<Pressable
-								key={g}
+								key={option.label}
 								style={styles.modalItem}
 								onPress={() => {
-									setGenre(g);
+									setGenre(option.value);
+									setGenreLabel(option.label);
 									setShowGenreModal(false);
 								}}
 							>
-								<Text style={[styles.modalItemText, g === genre && styles.modalItemSelected]}>
-									{g}
+								<Text style={[styles.modalItemText, option.value === genre && styles.modalItemSelected]}>
+									{option.label}
 								</Text>
-								{g === genre && <Ionicons name="checkmark" size={24} color="#F2ABAF" />}
+								{option.value === genre && <Ionicons name="checkmark" size={24} color="#F2ABAF" />}
 							</Pressable>
 						))}
 					</View>
@@ -443,6 +745,48 @@ const styles = StyleSheet.create({
 		flex: 1,
 		fontSize: 16,
 		color: "#333",
+	},
+	searchButton: {
+		fontSize: 14,
+		fontWeight: "600",
+		color: "#F2ABAF",
+	},
+	loadingContainer: {
+		alignItems: "center",
+		justifyContent: "center",
+		paddingVertical: 40,
+	},
+	loadingText: {
+		marginTop: 12,
+		fontSize: 14,
+		color: "#999",
+	},
+	noResults: {
+		alignItems: "center",
+		justifyContent: "center",
+		paddingVertical: 60,
+		paddingHorizontal: 32,
+	},
+	noResultsText: {
+		marginTop: 16,
+		fontSize: 16,
+		color: "#666",
+		textAlign: "center",
+	},
+	noResultsHint: {
+		marginTop: 8,
+		fontSize: 14,
+		color: "#999",
+		textAlign: "center",
+	},
+	resultImageContainer: {
+		width: 56,
+		height: 56,
+		backgroundColor: "#E8E8E8",
+		borderRadius: 4,
+		marginRight: 12,
+		justifyContent: "center",
+		alignItems: "center",
 	},
 	resultsList: {
 		gap: 0,
