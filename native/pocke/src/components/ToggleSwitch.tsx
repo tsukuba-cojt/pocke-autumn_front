@@ -9,6 +9,7 @@ type Props = {
 };
 
 export default function ToggleSwitch({ value, onValueChange, disabled = false }: Props) {
+	console.log("ToggleSwitch received value:", value);
 	const animatedValue = useRef(new Animated.Value(value ? 1 : 0)).current;
 
 	useEffect(() => {

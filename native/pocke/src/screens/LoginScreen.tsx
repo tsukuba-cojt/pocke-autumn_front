@@ -1,9 +1,13 @@
-import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
+import { View, Text, TextInput, StyleSheet, Pressable, Alert } from "react-native";
 import { useState } from "react";
+import * as WebBrowser from "expo-web-browser";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../navigation/types";
+import { saveToken } from "../utils/tokenManager";
 import Logo from "../components/Logo";
 import GoogleLogo from "../components/GoogleLogo";
+
+WebBrowser.maybeCompleteAuthSession();
 
 type Props = {
 	navigation: NativeStackNavigationProp<AuthStackParamList, "Login">;
@@ -13,16 +17,73 @@ export default function LoginScreen({ navigation }: Props) {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 
-	const handleLogin = () => {
-		// TODO: 実際のログイン処理を実装
-		// 認証状態を更新してRootNavigatorでMainAppに遷移する
-		navigation.navigate("SettingProfile");
-		console.log("ログイン処理");
+	const handleLogin = async () => {
+		try {
+			const url = "https://pocke-autumn-back.pocke-cojt.workers.dev/auth/login";
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({"email":email,"password":password})
+			});
+
+			if (!response.ok) {
+				console.error("ログイン失敗:", response.status);
+				return;
+			}
+
+			const data = await response.json();
+			console.log(data);
+
+			// tokenを保存
+			if (data.token) {
+				await saveToken(data.token);
+				console.log("Token saved successfully");
+				navigation.navigate("Home");
+			} else {
+				console.error("Token not found in response");
+			}
+		} catch (error) {
+			console.error("エラー:", error);
+		}
 	};
 
-	const handleGoogleLogin = () => {
-		// TODO: Google認証処理を実装
-		console.log('Googleログイン');
+	const handleGoogleLogin = async () => {
+		try {
+			const authUrl = "https://pocke-autumn-back.pocke-cojt.workers.dev/auth/google";
+
+			// WebブラウザでGoogle認証ページを開く
+			const result = await WebBrowser.openAuthSessionAsync(
+				authUrl,
+				"pocke://auth" // リダイレクトURL
+			);
+
+			console.log("Auth result:", result);
+
+			if (result.type === "success" && result.url) {
+				// URLからtokenを抽出
+				const url = new URL(result.url);
+				const token = url.searchParams.get("token");
+
+				if (token) {
+				await saveToken(token);
+					console.log("Token saved successfully");
+					navigation.navigate("Home");
+				} else {
+					console.error("Token not found in redirect URL");
+					Alert.alert("エラー", "認証に失敗しました");
+				}
+			} else if (result.type === "cancel") {
+				console.log("ユーザーが認証をキャンセルしました");
+			} else {
+				console.error("認証失敗:", result);
+				Alert.alert("エラー", "Google認証に失敗しました");
+			}
+		} catch (error) {
+			console.error("エラー:", error);
+			Alert.alert("エラー", "通信エラーが発生しました");
+		}
 	};
 
 	return (
@@ -76,7 +137,7 @@ export default function LoginScreen({ navigation }: Props) {
 					<Text style={styles.googleButtonContents}>Googleでログイン</Text>
 				</View>
 			</Pressable>
-			
+
 			<Pressable onPress={() => navigation.navigate("Register")}>
 				<Text style={styles.registerLink}>
 					アカウントをお持ちでない方はこちら

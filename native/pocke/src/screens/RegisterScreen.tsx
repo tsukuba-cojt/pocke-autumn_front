@@ -1,9 +1,13 @@
-import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
+import { View, Text, TextInput, StyleSheet, Pressable, Alert } from "react-native";
 import { useState } from "react";
+import * as WebBrowser from "expo-web-browser";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../navigation/types";
+import { saveToken } from "../utils/tokenManager";
 import Logo from "../components/Logo";
 import GoogleLogo from "../components/GoogleLogo";
+
+WebBrowser.maybeCompleteAuthSession();
 
 type Props = {
 	navigation: NativeStackNavigationProp<AuthStackParamList, "Register">;
@@ -14,13 +18,91 @@ export default function RegisterScreen({ navigation }: Props) {
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 
-	const handleRegister = () => {
-		navigation.navigate("SettingProfile");
+	const handleRegister = async () => {
+		// パスワード確認のバリデーション
+		if (password !== confirmPassword) {
+			Alert.alert("エラー", "パスワードが一致しません");
+			return;
+		}
+
+		if (!email || !password) {
+			Alert.alert("エラー", "メールアドレスとパスワードを入力してください");
+			return;
+		}
+
+		try {
+			const url = "https://pocke-autumn-back.pocke-cojt.workers.dev/auth/signup";
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({"email":email,"password":password})
+			});
+
+			if (!response.ok) {
+				console.error("新規登録失敗:", response.status);
+				const errorText = await response.text();
+				console.error("Response:", errorText);
+				Alert.alert("エラー", "新規登録に失敗しました");
+				return;
+			}
+
+			const data = await response.json();
+			console.log(data);
+
+			// tokenを保存
+			if (data.token) {
+				await saveToken(data.token);
+				console.log("Token saved successfully");
+				// 新規登録後はプロフィール設定画面へ
+				navigation.navigate("Profile", { screen: "SettingProfile" });
+			} else {
+				console.error("Token not found in response");
+				Alert.alert("エラー", "認証情報の保存に失敗しました");
+			}
+		} catch (error) {
+			console.error("エラー:", error);
+			Alert.alert("エラー", "通信エラーが発生しました");
+		}
 	};
 
-	const handleGoogleRegister = () => {
-		// TODO: Google認証処理を実装
-		console.log('Google登録');
+	const handleGoogleRegister = async () => {
+		try {
+			const authUrl = "https://pocke-autumn-back.pocke-cojt.workers.dev/auth/google";
+			
+			// WebブラウザでGoogle認証ページを開く
+			const result = await WebBrowser.openAuthSessionAsync(
+				authUrl,
+				"pocke://auth" // リダイレクトURL
+			);
+
+			console.log("Auth result:", result);
+
+			if (result.type === "success" && result.url) {
+				// URLからtokenを抽出
+				const url = new URL(result.url);
+				const token = url.searchParams.get("token");
+
+				if (token) {
+					await saveToken(token);
+					console.log("Token saved successfully");
+					// 新規登録後はプロフィール設定画面へ
+					navigation.navigate("Profile", { screen: "SettingProfile" });
+				} else {
+					console.error("Token not found in redirect URL");
+					Alert.alert("エラー", "認証に失敗しました");
+				}
+			} else if (result.type === "cancel") {
+				console.log("ユーザーが認証をキャンセルしました");
+			} else {
+				console.error("認証失敗:", result);
+				Alert.alert("エラー", "Google認証に失敗しました");
+			}
+		} catch (error) {
+			console.error("エラー:", error);
+			Alert.alert("エラー", "通信エラーが発生しました");
+		}
 	};
 
 	return (
